@@ -54,6 +54,37 @@ class Point():
     def length( self ):
         return math.sqrt( self.squaredLength )
 
+def traceGrid( x0, y0, x1, y1 ):
+    x0 = int( x0 )
+    y0 = int( y0 )
+    x1 = int( x1 )
+    y1 = int( y1 )
+
+    dx = abs(x1 - x0);
+    dy = abs(y1 - y0);
+    x = x0;
+    y = y0;
+    n = 1 + dx + dy;
+    x_inc = 1 if (x1 > x0) else -1
+    y_inc = 1 if (y1 > y0) else -1
+    error = dx - dy;
+    dx *= 2;
+    dy *= 2;
+
+    while n > 0:
+        if (error > 0):
+            x += x_inc;
+            error -= dy;
+        else:
+            y += y_inc;
+            error += dx;
+
+        n -= 1
+
+        if n > 0:
+            yield x, y, error > 0
+
+
 class Rect():
     def __init__( self, *args ):
         if len( args ) == 2:
