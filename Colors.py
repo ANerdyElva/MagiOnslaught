@@ -1,5 +1,8 @@
 from libtcodpy import Color
 
+Player = Color( 204, 153, 0 )
+Enemy = Color( 0, 102, 102 )
+
 White = Color( 255, 255, 255 )
 Red = Color( 255, 0, 0 )
 Green = Color( 0, 255, 0 )
