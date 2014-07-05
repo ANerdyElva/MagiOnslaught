@@ -25,11 +25,11 @@ class Renderer():
         self.renderTarget = Graphics.MapRenderer.Render( self._map, self.renderTarget )
 
     def setCamera( self, x, y ):
-        self.cameraX = x
-        self.cameraY = y
+        self.cameraX = int( x )
+        self.cameraY = int( y )
     def moveCamera( self, x, y ):
-        self.cameraX += x
-        self.cameraY += y
+        self.cameraX += int( x )
+        self.cameraY += int( y )
 
     def renderMap( self ):
         if self.renderTarget is not None:

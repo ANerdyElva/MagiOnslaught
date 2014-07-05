@@ -39,6 +39,20 @@ class SplittingTree():
         for n in self.children:
             n.trySplit( isLegalChild, doSplit )
 
+    def pickRandomRoom( self, picker ):
+        if self.isLeaf:
+            return self
+
+        pick = picker()
+
+        if pick == True:
+            pick = 1
+        elif pick == False:
+            pick = 0
+
+        child = self.children[ pick ]
+        return child.pickRandomRoom( picker )
+
     def iterateTree( self, pre = None, post = None ):
         if pre is not None:
             pre( self )

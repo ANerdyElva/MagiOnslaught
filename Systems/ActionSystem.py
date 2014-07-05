@@ -29,10 +29,6 @@ class ActionSystem():
         listEnd = len( tp )
 
         key = ent.__nextTurn
-        #print()
-        #print()
-        #print( 'key: ', key )
-        #print( [ ent.__nextTurn for ent in self.toProcessList ] )
 
         if listEnd == 0:
             tp.append( ent )
@@ -40,7 +36,6 @@ class ActionSystem():
 
         while end >= begin:
             mid = begin + ( ( end - begin ) // 2 )
-            #print( '-- %d, %d, %d' % ( begin, mid, end ) )
 
             comp = tp[ mid ].__nextTurn
 
@@ -50,8 +45,6 @@ class ActionSystem():
                 end = mid - 1
             else:
                 break
-
-            #print( '++ %d, %d, %d' % ( begin, mid, end ) )
 
         #Key not found, check if to insert before or after the current index
         if comp > key:
@@ -70,6 +63,9 @@ class ActionSystem():
     def process( self ):
         if len( self.toProcessList ) == 0:
             self.updateProcessList()
+            if len( self.toProcessList ) == 0:
+                print( 'No entities to take actions' )
+                return False
 
         firstEnt = self.toProcessList.pop()
         turnTaker = firstEnt.getComponent( TurnTaker )
@@ -82,11 +78,10 @@ class ActionSystem():
         self.curTurn = firstEnt.__nextTurn
 
         assert( action.name in self.actions )
-        restTime = self.actions[ action.name ]( action.name, action.entity, action.params )
+        restTime = self.actions[ action.name ]( action.name, self.world, action.entity, action.params )
         assert( restTime is not None and restTime > 0 )
 
         firstEnt.__nextTurn = self.curTurn + restTime
         self._insertEnt( firstEnt )
 
         return True
-
