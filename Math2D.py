@@ -1,0 +1,112 @@
+import math
+
+class Point():
+    def __init__( self, x, y ):
+        self.x = x
+        self.y = y
+
+    def __add__( p1, p2 ):
+        return Point( p1.x + p2.x, p1.y + p2.y )
+
+    def __sub__( p1, p2 ):
+        return Point( p1.x - p2.x, p1.y - p2.y )
+
+    def __div__( p1, p2 ):
+        if type( p2 ) == Point:
+            return Point( p1.x / p2.x, p1.y / p2.y )
+        else:
+            return Point( p1.x / p2, p1.y / p2 )
+    def __mul__( p1, p2 ):
+        if type( p2 ) == Point:
+            return Point( p1.x * p2.x, p1.y * p2.y )
+        else:
+            return Point( p1.x * p2, p1.y * p2 )
+
+    def __str__( self ):
+        return '[%s/%s]' % ( self.x, self.y )
+
+    @property
+    def squaredLength( self ):
+        return self.x ** 2 + self.y ** 2
+    @property
+    def length( self ):
+        return math.sqrt( self.squaredLength )
+
+class Rect():
+    def __init__( self, *args ):
+        if len( args ) == 2:
+            _min = args[0]
+            _max = args[1]
+            self.p1 = Point( min( _min.x, _max.x ), min( _min.y, _max.y ) )
+            self.p2 = Point( max( _min.x, _max.x ), max( _min.y, _max.y ) )
+        elif len( args ) == 4:
+            self.p1 = Point( min( args[0], args[2] ), min( args[1], args[3] ) )
+            self.p2 = Point( max( args[0], args[2] ), max( args[1], args[3] ) )
+        else:
+            raise ValueError( 'Rect expects 2 or 4 arguments, received: ' + str( args ) )
+
+    def __str__( self ):
+        return '[Rect: %s; %s]' % ( self.p1, self.p2 )
+
+    @property
+    def width( self ):
+        return self.p2.x - self.p1.x
+    @property
+    def height( self ):
+        return self.p2.y - self.p1.y
+    @property
+    def dim( self ):
+        return self.p2 - self.p1
+
+    def intersects( a, b ):
+        return ( a.p1.x < b.p2.x and a.p2.x > b.p1.x and
+                a.p1.y < b.p2.y and a.p2.y > b.p1.y )
+
+    def findOverLap( self, other ):
+        def _findOverLap( m1_min, m1_max, m2_min, m2_max ):
+            if m1_max < m2_min or m2_max < m1_min:
+                return None
+
+            return max( m1_min, m2_min ), min( m1_max, m2_max )
+
+
+        x = _findOverLap( self.p1.x, self.p2.x, other.p1.x, other.p2.x )
+        if x is not None:
+            #print( self, other )
+            if self.p2.y < other.p1.y:
+                return 'X', x, ( self.p2.y, other.p1.y )
+            else:
+                return 'X', x, ( other.p2.y, self.p1.y )
+
+        y = _findOverLap( self.p1.y, self.p2.y, other.p1.y, other.p2.y )
+        if y is not None:
+            #print( self, other )
+            if self.p2.x < other.p1.x:
+                return 'Y', y, ( self.p2.x, other.p1.x )
+            else:
+                return 'Y', y, ( other.p2.x, self.p1.x )
+
+    @property
+    def size( self ):
+        dim = self.dim
+        return dim.x * dim.y
+
+def IntPoint( *args ):
+    if len( args ) == 1:
+        return Point( int( args[0].x ), int( args[0].y ) )
+    elif len( args ) == 2:
+        return Point( int( args[0] ), int( args[1] ) )
+    else:
+        raise ValueError( 'IntPoint expects 1 or 2 arguments.' )
+
+def IntRect( *args ):
+    if len( args ) == 1:
+        return Rect( IntPoint( args[0].p1 ), IntPoint( args[0].p2 ) )
+    elif len( args ) == 2:
+        return Rect( IntPoint( args[0] ), IntPoint( args[1] ) )
+    elif len( args ) == 4:
+        return Rect( int( args[ 0 ] ), int( args[ 1 ] ), int( args[ 2 ] ), int( args[ 3 ] ) )
+    else:
+        raise ValueError( 'IntRect expects 1, 2 or 4 arguments, received: ' + str( args ) )
+
+

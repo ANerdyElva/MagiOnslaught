@@ -1,0 +1,45 @@
+import random
+import libtcodpy as libtcod
+
+import Components
+
+class Entity():
+    def __init__( self, tag = None ):
+        self.componentList = []
+        self.componentMap = {}
+        self.componentBaseMap = {}
+
+    def setWorld( self, world ):
+        self.world = world
+        self.world.markDirty()
+
+    def addComponent( self, comp ):
+        compType = type( comp )
+        self.componentList.append( comp )
+        self.componentMap[ compType ] = comp
+        comp._setEntity( self )
+
+        base = compType.__bases__[0]
+        while base != Components.Component:
+            if base in self.componentBaseMap:
+                self.componentBaseMap[base].append( comp )
+            else:
+                self.componentBaseMap[base] = [ comp ]
+
+            if base not in self.componentMap:
+                self.componentMap[ base ] = comp
+
+            base = base.__bases__[0]
+        
+    def getComponentByBase( self, base ):
+        if base in self.componentBaseMap:
+            return list( self.componentBaseMap[ base ] )
+
+    def getComponent( self, comp ):
+        if comp in self.componentMap:
+            return self.componentMap[ comp ]
+        else:
+            return None
+
+    def hasComponent( self, comp ):
+        return comp in self.componentMap
