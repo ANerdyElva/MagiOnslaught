@@ -67,7 +67,7 @@ class Game():
         self.world.addEntity( player )
         self.player = player
 
-        for i in range( 4 ):
+        for i in range( 1 ):
             self.world.addEntity( MakeOrb( player, i % 2, pos ) )
 
         def addEnemy( room ):

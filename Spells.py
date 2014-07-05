@@ -32,6 +32,7 @@ orbDamage = {
         }
 EnemyCollisionId = -1
 StopCollisionId = -2 #For when the velocity of an orb is close to 0
+WallCollisionId = -3 #For collision with a wall
 
 CollisionTypes = {
         ( WaterOrb, EnemyCollisionId ): lambda orb, enemy, char: ( char.makeWet(), char.takeDamage( WaterOrb, orbDamage[WaterOrb] ) ),
@@ -90,64 +91,48 @@ class SpellComponent( Component ):
         self.vel = delta * -0.1
 
     def updateCollision( self ):
-        p = Point( self.pos )
-        v = Point( self.vel )
-
-        if v.x == 0 or v.y == 0:
-            return
-
         m = self.entity.world._map
+        traveled = 0
 
-        distance = 0
-        m = self.entity.world._map
-        while True:
-            wall = p.floor() + Point( 0.5, 0.5 ) + v.copysign( 0.5 )
-            delta = wall - p
-            time = delta / v
+        def p():
+            return Point( int( math.floor( self.pos.x ) ), int( math.floor( self.pos.y ) ) )
 
-            remaining = 1.0 - distance
-            if time.x < 0.00001:
-                time.x = 2000000000000
-            if time.y < 0.00001:
-                time.y = 2000000000000
+        lP = p()
 
-            if time.x > remaining:
-                time.x = remaining
-            if time.y > remaining:
-                time.y = remaining
+        isBlocked = False
+        wallBlocked = False
+        entList = []
+        def checkBlock():
+            nonlocal isBlocked
+            nonlocal wallBlocked
+            nonlocal entList
 
-            minTime = min( time.x, time.y )
-            assert( minTime > -0.001 )
-            distance += minTime
-            print( time, minTime, remaining, v * minTime )
+            wallBlocked = m.hasFlag( lP.x, lP.y, BLOCKED )
+            entList = self.getCollidingEnts( lP ) if not wallBlocked else tuple()
 
-            if distance > 1:
-                break
+            isBlocked = wallBlocked or len( entList ) > 0
 
-            nP = ( p + v * ( minTime ) ).floor()
-            nP = nP.int()
-            
-            wallBlocked = m.hasFlag( nP.x, nP.y, BLOCKED )
-            entAtPos = self.getCollidingEnts( nP ) if not wallBlocked else tuple()
+        #Aaaaargh this is a bloody stupid implementation but it works, gamejam ho!
+        while not isBlocked and traveled <= 1:
+            self.pos.x += self.vel.x * 0.1
+            self.pos.y += self.vel.y * 0.1
+            traveled += 0.1
 
-            if wallBlocked or len( entAtPos ) > 0:
-                self.onCollide( wallBlocked, entAtPos )
-                if time.x < time.y:
-                    v.x = v.x * -0.9
-                else:
-                    v.y = v.y * -0.9
-            p += self.vel * ( minTime + 0.001 )
-            
+            pP = lP
+            lP = p()
+            checkBlock()
 
-            if distance >= 1:
-                break
+        if isBlocked:
+            self.onCollide( wallBlocked, entList )
 
+            self.pos.x -= self.vel.x * 0.15
+            self.pos.y -= self.vel.y * 0.15
 
+            if pP.x != lP.x: #Go back on the X axis
+                self.vel.x *= -0.9
+            else:
+                self.vel.y *= -0.9
 
-        self.pos.x = p.x
-        self.pos.y = p.y
-        self.vel.x = v.x
-        self.vel.y = v.y
 
     def getCollidingEnts( self, nP ):
         ents = self.entity.world.getEntitiesAtPos( nP )
@@ -172,6 +157,9 @@ class SpellComponent( Component ):
     def onCollide( self, wallBlocked, entAtPos ):
         if self.caster is not None:
             self.caster.removeOrb( self )
+
+        if wallBlocked:
+            self._doCollide( self.orbType, WallCollisionId, self.pos, None )
 
         for other in entAtPos:
             spell = other.getComponent( SpellComponent )
