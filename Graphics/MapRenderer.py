@@ -15,6 +15,7 @@ tileMap = {
         8: ( chr( 196 ), Colors.Wall ), #Horizontal wall
         9: ( chr( 191 ), Colors.Wall ), #Corner down and left
         10: ( chr( 218 ), Colors.Wall ), #Corner down and right
+        11: ( chr( 179 ), Colors.Wall ), #Vertical wall
         12: ( chr( 196 ), Colors.Wall ), #Horizontal wall
         13: ( chr( 196 ), Colors.Wall ), #Horizontal wall, end piece
         14: ( chr( 196 ), Colors.Wall ), #Horizontal wall, end piece

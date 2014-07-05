@@ -1,9 +1,13 @@
 import math
 
 class Point():
-    def __init__( self, x, y ):
-        self.x = x
-        self.y = y
+    def __init__( self, *args ):
+        if len( args ) == 1:
+            self.x = args[0].x
+            self.y = args[0].y
+        else:
+            self.x = args[0]
+            self.y = args[1]
 
     def __add__( p1, p2 ):
         return Point( p1.x + p2.x, p1.y + p2.y )
@@ -11,7 +15,7 @@ class Point():
     def __sub__( p1, p2 ):
         return Point( p1.x - p2.x, p1.y - p2.y )
 
-    def __div__( p1, p2 ):
+    def __truediv__( p1, p2 ):
         if type( p2 ) == Point:
             return Point( p1.x / p2.x, p1.y / p2.y )
         else:
@@ -22,8 +26,26 @@ class Point():
         else:
             return Point( p1.x * p2, p1.y * p2 )
 
+    def inv( self ):
+        x = 1 / self.x if self.x != 0 else 0
+        y = 1 / self.y if self.y != 0 else 0
+
+        return Point( x, y )
+
     def __str__( self ):
         return '[%s/%s]' % ( self.x, self.y )
+
+    def afterComma( self ):
+        return Point( self.x - int( self.x ), self.y - int( self.y ) )
+
+    def int( self ):
+        return Point( int( self.x ), int( self.y ) )
+    def floor( self ):
+        return Point( math.floor( self.x ), math.floor( self.y ) )
+
+    def copysign( self, val ):
+        return Point( math.copysign( val, self.x ), math.copysign( val, self.y ) )
+
 
     @property
     def squaredLength( self ):
@@ -114,3 +136,5 @@ def IntRect( *args ):
         raise ValueError( 'IntRect expects 1, 2 or 4 arguments, received: ' + str( args ) )
 
 
+def PointFromAngle( angle, dist ):
+    return Point( math.sin( angle ) * dist, math.cos( angle ) * dist )

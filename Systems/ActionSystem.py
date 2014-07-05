@@ -77,7 +77,6 @@ class ActionSystem():
 
         self.curTurn = firstEnt.__nextTurn
 
-        assert( action.name in self.actions )
         restTime = self.actions[ action.name ]( action.name, self.world, action.entity, action.params )
         assert( restTime is not None and restTime > 0 )
 

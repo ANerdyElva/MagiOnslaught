@@ -48,5 +48,6 @@ class Renderer():
 
         for ent in self.world.getEntityByComponent( Components.Renderable, Components.Position ):
             ent.getComponent(Components.Renderable).draw( self.cameraX - self.hRW, self.cameraY - self.hRH )
+
         tcod.console_flush()
 
