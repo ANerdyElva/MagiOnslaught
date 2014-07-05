@@ -71,8 +71,6 @@ class SpellComponent( Component ):
             return
 
         m = self.entity.world._map
-        if self.caster is None:
-            return
 
         distance = 0
         m = self.entity.world._map
@@ -82,25 +80,34 @@ class SpellComponent( Component ):
             time = delta / v
 
             minTime = min( time.x, time.y )
+            assert( minTime > 0 )
             distance += minTime
 
             if distance > 1:
                 break
 
-            nP = ( p + v * ( minTime + 0.001 ) ).floor()
+            nP = ( p + v * ( minTime ) ).floor()
             if m.hasFlag( int( nP.x ), int( nP.y ), BLOCKED ):
-                p += self.vel * minTime
+                p -= self.vel * ( minTime + 0.001 )
                 if time.x < time.y:
                     v.x = v.x * -0.9
                 else:
                     v.y = v.y * -0.9
-                p -= self.vel * minTime
+                p += self.vel * ( minTime + 0.001 )
+                self.onCollide()
 
 
         self.pos.x = p.x
         self.pos.y = p.y
         self.vel.x = v.x
         self.vel.y = v.y
+
+    def onCollide( self ):
+        if self.caster is not None:
+            self.caster.removeOrb( self )
+            self.entity.getComponent( SpellRenderable ).orbType = 1
+        else:
+            print( 'KABOOM' )
 
     def updateVel( self ):
         if self.parentPos is None:
