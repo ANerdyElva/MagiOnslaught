@@ -60,7 +60,7 @@ class ActionSystem():
             self.curTurn = 0
 
 
-    def process( self ):
+    def process( self, maxTime ):
         if len( self.toProcessList ) == 0:
             self.updateProcessList()
             if len( self.toProcessList ) == 0:
@@ -70,12 +70,15 @@ class ActionSystem():
         firstEnt = self.toProcessList.pop()
         turnTaker = firstEnt.getComponent( TurnTaker )
 
+        if self.curTurn + maxTime < firstEnt.__nextTurn:
+            self.curTurn += maxTime
+            self._insertEnt( firstEnt )
+            return True
+
         action = turnTaker.getNextTurn()
         if action is None:
             self._insertEnt( firstEnt )
             return False
-
-        self.curTurn = firstEnt.__nextTurn
 
         restTime = self.actions[ action.name ]( action.name, self.world, action.entity, action.params )
         assert( restTime is not None and restTime > 0 )

@@ -37,6 +37,23 @@ class CharacterComponent( Component ):
 
     def __getattr__( self, key ):
         return self.data[ key ]
+    def set( self, key, val ):
+        if key.startswith( 'Base' ):
+            raise ValueError( 'Unable to change base values (%s)' % key )
+
+        self.data[ key ] = val
+
+    def takeDamage( self, damageType, damage ):
+        #TODO: Take damageType into account
+        self.set( 'HP', self.HP - damage )
+        print( self.HP )
+        if self.HP < 0:
+            self.entity.world.removeEntity( self.entity )
+            print( 'Aaargh, I died.' )
+    def makeWet( self ):
+        self.state = 'Wet'
+    def makeDry( self ):
+        self.state = 'Wet'
 
 class Action():
     def __init__( self, entity, name, params ):
