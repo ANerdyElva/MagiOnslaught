@@ -9,6 +9,9 @@ class Map():
         self.tileData = self.newByteArray()
 
     def I( self, x, y ):
+        assert( x < self.width )
+        assert( y < self.height )
+
         return ( y * self.width ) + x
 
     def setI( self, i, tile ):

@@ -10,17 +10,33 @@ class Component():
     def __str__( self ):
         return '{%s 0x%X}' % ( type( self ).__name__, hash( self ) )
 
+    def finalize( self ):
+        pass
+
 class Position( Component ):
     def __init__( self, x, y ):
         self.x = x
         self.y = y
+
+    def moveTo( self, other ):
+        self.x = other.x
+        self.y = other.y
 
     def __str__( self ):
         return '{Position %d/%d}' % ( self.x, self.y )
 
 class CharacterComponent( Component ):
     def __init__( self, baseCharacter ):
-        pass
+        self.character = baseCharacter
+        self.data = {}
+
+        for n in baseCharacter.data:
+            if n.startswith( 'Base' ):
+                self.data[ n[4:] ] = baseCharacter.data[ n ]
+            self.data[ n ] = baseCharacter.data[ n ]
+
+    def __getattr__( self, key ):
+        return self.data[ key ]
 
 class Action():
     def __init__( self, entity, name, params ):
@@ -42,6 +58,12 @@ class Renderable( Component ):
 
     def __str__( self ):
         return '{Renderable %d}' % ( ord( self.char ) )
+
+    def finalize( self ):
+        char = self.entity.getComponent( CharacterComponent )
+        if char is not None and char.RenderColor is not None:
+            self.color = char.RenderColor
+
 
 class TurnTaker( Component ):
     def __init__( self, ai = None, timeTillNextTurn = 0 ):

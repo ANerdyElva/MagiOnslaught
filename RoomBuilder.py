@@ -186,9 +186,9 @@ def build( _map, minRoomWidth = 20, minRoomHeight = 20 ):
             pos = random.randrange( overLap[1][0] + 3, overLap[1][1] - 3 )
 
             if overLap[0] == 'X':
-                hall = Rect( pos - 1, overLap[2][0], pos + 1, overLap[2][1] )
+                hall = Rect( pos - 2, overLap[2][0], pos + 2, overLap[2][1] )
             else:
-                hall = Rect( overLap[2][0], pos - 1, overLap[2][1], pos + 1 )
+                hall = Rect( overLap[2][0], pos - 2, overLap[2][1], pos + 2 )
             #print( 'Hall: ', hall )
 
             doesIntersect = False

@@ -16,6 +16,9 @@ class Entity():
         self.world = world
         self.world.markDirty()
 
+        for comp in self.componentList:
+            comp.finalize()
+
     def addComponent( self, comp ):
         compType = type( comp )
         self.componentList.append( comp )
