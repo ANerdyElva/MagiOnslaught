@@ -1,3 +1,5 @@
+import Constant
+
 class Map():
     def __init__( self, width, height ):
         self.width = width
@@ -34,6 +36,10 @@ class Map():
     def setFlags( self, x, y, flag ):
         self.setFlagsI( self.I( x, y ), flag )
 
+    def hasFlag( self, x, y, flag ):
+        f = self.getFlags( x, y )
+        return ( f & flag ) > 0
+
     def getFlagsI( self, i ):
         return self.tileData[ i ]
     def getFlags( self, x, y ):
@@ -58,3 +64,6 @@ class Map():
             _y2 += 1
 
         return [ i for y in range(_y1,_y2) for i in self.iterateLine(_x1,_x2,y) ]
+
+    def isBlocked( self, x, y ):
+        return self.hasFlag( x, y, Constant.BLOCKED )

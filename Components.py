@@ -1,14 +1,22 @@
 import random
 import libtcodpy as libtcod
+import Constant
+import Colors
 
 class Component():
     def _setEntity( self, ent ):
         self.entity = ent
 
+    def __str__( self ):
+        return '{%s 0x%X}' % ( type( self ).__name__, hash( self ) )
+
 class Position( Component ):
     def __init__( self, x, y ):
         self.x = x
         self.y = y
+
+    def __str__( self ):
+        return '{Position %d/%d}' % ( self.x, self.y )
 
 class CharacterComponent( Component ):
     def __init__( self, baseCharacter ):
@@ -20,13 +28,20 @@ class Action():
         self.name = name
         self.params = params
 
+    def __str__( self ):
+        return '[%s@Ent.%d %s (%s)]' % ( type(self).__name__, self.entity.id, self.name, self.params )
+
 class Renderable( Component ):
     def __init__( self, char ):
         self.char = char
+        self.color = Colors.White
 
     def draw( self, camX, camY ):
         pos = self.entity.getComponent( Position )
-        libtcod.console_put_char( 0, int( pos.x - camX ), int( pos.y - camY ), self.char, libtcod.BKGND_NONE )
+        libtcod.console_put_char_ex( 0, int( pos.x - camX ), int( pos.y - camY ), self.char, self.color, libtcod.BKGND_NONE )
+
+    def __str__( self ):
+        return '{Renderable %d}' % ( ord( self.char ) )
 
 class TurnTaker( Component ):
     def __init__( self, ai = None, timeTillNextTurn = 0 ):
@@ -40,5 +55,13 @@ class TurnTaker( Component ):
 _directions = ( ( 1, 0 ), ( 0, 1 ), ( -1, 0 ), ( 0, -1 ) )
 class TurnTakerAi():
     def __call__( self, turnComponent, ent ):
-        if ent.hasComponent( Position ):
-            return Action( ent, 'move', random.choice( _directions ) )
+        pos = ent.getComponent( Position )
+        if pos is not None:
+            l = list( _directions )
+            random.shuffle( l )
+
+            for choice in l:
+                if not ent.world._map.isBlocked( pos.x + choice[0], pos.y + choice[1] ):
+                    return Action( ent, 'move', choice )
+
+        return Action( ent, 'sleep', 100 )

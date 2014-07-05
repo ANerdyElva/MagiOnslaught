@@ -9,6 +9,9 @@ class Entity():
         self.componentMap = {}
         self.componentBaseMap = {}
 
+        self.id = Entity.nextId
+        Entity.nextId += 1
+
     def setWorld( self, world ):
         self.world = world
         self.world.markDirty()
@@ -43,3 +46,8 @@ class Entity():
 
     def hasComponent( self, comp ):
         return comp in self.componentMap
+
+    def __str__( self ):
+        return '[Entity %d %s]' % ( self.id, '/'.join( [ str( self.componentMap[ n ] ) for n in self.componentMap ] ) )
+
+    nextId = 1

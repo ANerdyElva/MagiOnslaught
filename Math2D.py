@@ -58,6 +58,10 @@ class Rect():
     def dim( self ):
         return self.p2 - self.p1
 
+    @property
+    def center( self ):
+        return ( self.p1 * 0.5 ) + ( self.p2 * 0.5 )
+
     def intersects( a, b ):
         return ( a.p1.x < b.p2.x and a.p2.x > b.p1.x and
                 a.p1.y < b.p2.y and a.p2.y > b.p1.y )
