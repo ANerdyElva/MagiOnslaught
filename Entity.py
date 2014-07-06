@@ -9,6 +9,8 @@ class Entity():
         self.componentMap = {}
         self.componentBaseMap = {}
 
+        self.onRemove = []
+
         self.id = Entity.nextId
         Entity.nextId += 1
 

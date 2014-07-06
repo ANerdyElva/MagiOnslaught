@@ -2,6 +2,7 @@ import Components
 import Constant
 import Colors
 import Character
+import Math2D
 
 MOVE_LENGTH = 100
 MIN_TURN_LENGTH = 1
@@ -34,6 +35,11 @@ def Move( actionName, world, ent, params ):
     if world._map.hasFlag( newPos[0], newPos[1], Constant.BLOCKED ):
         return MIN_TURN_LENGTH
 
+    entsAtPos = world.getEntitiesAtPos( Math2D.Point( newPos[0], newPos[1] ), 0.1 )
+    entsAtPos = list( [ n for n in entsAtPos if n != ent ] )
+    if len( entsAtPos ) > 0:
+        return MIN_TURN_LENGTH
+
     pos.x += params[ 0 ]
     pos.y += params[ 1 ]
 
@@ -60,3 +66,11 @@ def Sleep( actionName, world, ent, params ):
             graph.color = char.RenderColor
 
     return params
+
+def Attack( actionName, world, ent, params ):
+    char = ent.getComponent( Components.CharacterComponent )
+
+    if ent.target is not None:
+        ent.target.getComponent( Components.CharacterComponent ).takeDamageFromEnemy( ent, char.AttackDamage )
+
+    return 100

@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import functools
 
 from Components import *
+from Math2D import Point
 
 world = None
 
@@ -17,6 +18,7 @@ class World():
         self.systems = []
 
         self._map = _map
+        self.onRemove = []
 
     def clear( self ):
         if self._isDirty:
@@ -29,6 +31,11 @@ class World():
             return
 
         self.entityList.remove( ent )
+        for n in self.onRemove:
+            n( ent )
+        for n in ent.onRemove:
+            n( ent )
+
         self._isDirty = True
 
     def addEntity( self, ent ):
@@ -60,18 +67,20 @@ class World():
                 in self.entityList
                 if comp in ent.componentMap ], self._entByComponentCache )
 
-    def getEntitiesAtPos( self, checkPos ):
-        x = int( checkPos.x )
-        y = int( checkPos.y )
+    def getEntitiesAtPos( self, checkPos, radius = 1 ):
+        checkPos = Point( checkPos )
 
         baseList = self.getEntityByComponent( Position )
         retList = []
 
-        for ent in baseList:
-            pos = ent.getComponent( Position )
+        radius = radius ** 2
 
-            if int( pos.x ) == x and int( pos.y ) == y:
+        for ent in baseList:
+            pos = Point( ent.getComponent( Position ) )
+
+            if ( checkPos - pos ).squaredLength < radius:
                 retList.append( ent )
+
         return retList
 
     def _getEntityByCb( self, components, callback, cache ):
