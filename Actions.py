@@ -39,9 +39,24 @@ def Move( actionName, world, ent, params ):
 
     char = _getChar( ent )
 
+    graph = ent.getComponent( Components.Renderable )
+    if graph is not None:
+        if char.MoveColor is not None:
+            graph.color = char.MoveColor
+        else:
+            graph.color = char.RenderColor
+
     return diff / char.MoveSpeed
 
 def Sleep( actionName, world, ent, params ):
     graph = ent.getComponent( Components.Renderable )
+
+    char = _getChar( ent )
+
+    if graph is not None:
+        if char.SleepColor is not None:
+            graph.color = char.SleepColor
+        else:
+            graph.color = char.RenderColor
 
     return params

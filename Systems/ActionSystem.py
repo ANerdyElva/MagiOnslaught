@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import random
 
 from Components import TurnTaker
 
@@ -86,8 +87,9 @@ class ActionSystem():
             return False
 
         assert( restTime > 0 )
+        randExtra = random.randrange( -turnTaker.randomRange, turnTaker.randomRange+1 )
 
-        firstEnt.__nextTurn = self.curTurn + restTime
+        firstEnt.__nextTurn = self.curTurn + restTime + randExtra
         self._insertEnt( firstEnt )
 
         return True

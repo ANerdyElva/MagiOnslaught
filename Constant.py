@@ -1,3 +1,4 @@
 BLOCKED = 1
+TRANSPARENT = 2
 
 
