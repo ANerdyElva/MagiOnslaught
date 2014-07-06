@@ -41,3 +41,7 @@ def buildMap( m, root ):
             else:
                 m.tileType[ i ] = 0x10
 
+
+messageLines = [ 'Welcome to MagiOnslaught!', 'Use WASD to move, 1-4 to create different spell orbs and left mouse click somewhere to shoot them in a direction.', 'Copyright: Kevin van der Velden 2014.', '', 'Made for Gamedev.stackexchange.com Summer Gamejam!' ]
+def AddLog( message ):
+    messageLines.append( message )

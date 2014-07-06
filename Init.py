@@ -1,7 +1,7 @@
 import libtcodpy as tcod
 
-SCREEN_WIDTH = 140
-SCREEN_HEIGHT = 80
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 100
 
 def Init( title ):
     tcod.console_set_custom_font( b'data/fonts/terminal8x8_gs_ro.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_ASCII_INROW )

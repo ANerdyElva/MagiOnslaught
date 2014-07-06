@@ -10,6 +10,13 @@ class ActionSystem():
         self.actions = actions
         self.curTurn = 0
 
+        self.world.onRemove.append( lambda ent: self.removeEnt( ent ) )
+
+    def removeEnt( self, ent ):
+        while ent in self.toProcessList:
+            self.toProcessList.remove( ent )
+
+
     def updateProcessList( self ):
         entities = self.world.getEntityByComponent( TurnTaker )
         self.toProcessList = []
@@ -85,6 +92,11 @@ class ActionSystem():
         if restTime is None:
             self._insertEnt( firstEnt )
             return False
+
+        if restTime == 1:
+            turnTaker.wasBlocked += 1
+        else:
+            turnTaker.wasBlocked = 0
 
         assert( restTime > 0 )
         randExtra = random.randrange( -turnTaker.randomRange, turnTaker.randomRange+1 )

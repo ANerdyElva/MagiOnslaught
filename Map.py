@@ -79,14 +79,13 @@ class Map():
         self.tcodmap = tcod.map_new( self.width, self.height )
         tcod.map_clear( self.tcodmap, True, True )
 
-        return
         for y in range( self.height ):
             i = self.I( 0, y )
             for x in range( self.width ):
                 flags = self.tileData[ i ]
                 tcod.map_set_properties( self.tcodmap,
                         x, y,
-                        ( flags & Constant.TRANSPARENT ) == 0,
+                        True,
                         ( flags & Constant.BLOCKED ) == 0 )
 
 
@@ -102,7 +101,7 @@ class Map():
         if self.pathEnd != end:
             self.pathEnd = end
 
-            self.dijkstra = tcod.dijkstra_new( self.tcodmap )
+            self.dijkstra = tcod.dijkstra_new( self.tcodmap, 1.41421356237 )
             tcod.dijkstra_compute( self.dijkstra, end[0], end[1] )
 
         if not tcod.dijkstra_path_set( self.dijkstra, start[0], start[1] ):

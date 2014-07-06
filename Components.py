@@ -1,7 +1,8 @@
 import random
 import libtcodpy as libtcod
-import Constant
+from Constant import *
 import Colors
+import Funcs
 from Math2D import *
 
 class Component():
@@ -45,12 +46,30 @@ class CharacterComponent( Component ):
         self.data[ key ] = val
 
     def takeDamage( self, damageType, damage ):
-        #TODO: Take damageType into account
         self.set( 'HP', self.HP - damage )
-        print( self.HP )
+        damageName = orbNames[ damageType ]
+
         if self.HP < 0:
             self.entity.world.removeEntity( self.entity )
-            print( 'Aaargh, I died.' )
+            Funcs.AddLog( '%s died!' % ( self.Name ) )
+        else:
+            Funcs.AddLog( '%s orb hit an %s for %d damage, %s has %d HP left.' % ( damageName, self.Name, damage, self.Name, self.HP ) )
+    def takeDamageFromEnemy( self, enemy, damage ):
+        self.set( 'HP', self.HP - damage )
+
+        if self.HP < 0:
+            self.entity.world.removeEntity( self.entity )
+            Funcs.AddLog( '%s died!' % ( self.Name ) )
+        else:
+            char = enemy.getComponent( CharacterComponent )
+            Funcs.AddLog( '%s hit you with a %s for %d damage, you have %d HP left.' % (
+                char.Name,
+                char.Weapon,
+                damage,
+                self.HP
+                ) )
+
+
     def makeWet( self ):
         self.state = 'Wet'
     def makeDry( self ):
@@ -87,10 +106,12 @@ class TurnTaker( Component ):
     def __init__( self, ai = None, timeTillNextTurn = 0 ):
         self.ai = ai
         self.timeTillNextTurn = timeTillNextTurn
+        self.wasBlocked = 0
 
     def getNextTurn( self ):
         if self.ai is not None:
-            return self.ai( self, self.entity )
+            ret = self.ai( self, self.entity, self.wasBlocked )
+            return ret
 
     def finalize( self ):
         if self.entity.hasComponent( CharacterComponent ):
@@ -100,22 +121,30 @@ class TurnTaker( Component ):
 
 _directions = ( ( 1, 0 ), ( 0, 1 ), ( -1, 0 ), ( 0, -1 ) )
 class TurnTakerAi():
-    def __call__( self, turnComponent, ent ):
+    def __call__( self, turnComponent, ent, wasBlocked ):
+        if ent.target is None:
+            return Action( ent, 'move', random.choice( _directions ) )
+
         pos = Point( ent.getComponent( Position ) )
         targetPos = Point( ent.target.getComponent( Position ) )
 
-        if ( targetPos - pos ).squaredLength < 2:
+        if ( targetPos - pos ).squaredLength < 8:
             return Action( ent, 'attack', ent.target )
-        elif ( targetPos - pos ).squaredLength < 20 * 20:
-            path = ent.world._map.findPath( pos, targetPos )
+        elif ( targetPos - pos ).squaredLength < 120 ** 2:
+            if wasBlocked > 2:
+                return Action( ent, 'sleep', random.randrange( 50, 200 ) )
+            elif wasBlocked > 0:
+                return Action( ent, 'move', random.choice( _directions ) )
+            else:
+                path = ent.world._map.findPath( pos, targetPos )
 
-            if path is not None and len( path ) > 2:
-                nextPoint = path[ -2 ]
+                if path is not None and len( path ) > 1:
+                    nextPoint = path[ -2 ]
 
-                _x = int(math.floor(pos.x))
-                _y = int(math.floor(pos.y)) 
+                    _x = int(math.floor(pos.x))
+                    _y = int(math.floor(pos.y)) 
 
-                move = ( nextPoint[0] - _x, nextPoint[1] - _y )
-                return Action( ent, 'move', move )
+                    move = ( nextPoint[0] - _x, nextPoint[1] - _y )
+                    return Action( ent, 'move', move )
 
         return Action( ent, 'sleep', 400 )

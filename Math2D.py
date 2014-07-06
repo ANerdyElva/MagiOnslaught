@@ -46,6 +46,12 @@ class Point():
     def copysign( self, val ):
         return Point( math.copysign( val, self.x ), math.copysign( val, self.y ) )
 
+    def normalized( self ):
+        l = self.length
+        if l != 0:
+            l = 1.0 / l
+
+        return Point( self.x * l, self.y * l )
 
     @property
     def squaredLength( self ):

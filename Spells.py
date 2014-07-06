@@ -7,50 +7,9 @@ from Entity import *
 from Constant import *
 from Components import *
 from Math2D import *
+import Funcs
 
-WaterOrb = 0
-FireOrb = 1
-EarthOrb = 2
-AirOrb = 3
-SteamOrb = 4
-LightningOrb = 5
-
-RotateDist = 7
-
-spawnableOrbs = {
-        1: WaterOrb,
-        2: FireOrb,
-        3: EarthOrb,
-        4: AirOrb,
-        }
-orbNames = {
-        WaterOrb: "Water",
-        FireOrb: "Fire",
-        EarthOrb: 'Earth',
-        AirOrb: 'Air',
-        SteamOrb: 'Steam',
-        LightningOrb: 'Lightning',
-        }
-orbColors = {
-        WaterOrb: ( tcod.Color( 0, 0, 255 ), chr( 7 ) ),
-        FireOrb: ( tcod.Color( 255, 0, 0 ), chr( 15 ) ),
-        EarthOrb: ( tcod.Color( 142, 63, 26), chr( 7 ) ),
-        AirOrb: ( tcod.Color( 150, 150, 200 ), chr( 15 ) ),
-        SteamOrb: ( tcod.Color( 200, 200, 200 ), chr( 15 ) ),
-        LightningOrb: ( tcod.Color( 145,30,139 ), chr( 0x2A ) ),
-        }
-
-orbDamage = {
-        WaterOrb: 2,
-        EarthOrb: 3,
-        FireOrb: 5,
-        AirOrb: 3,
-        SteamOrb: 5,
-        LightningOrb: 6,
-        }
-EnemyCollisionId = -1
-StopCollisionId = -2 #For when the velocity of an orb is close to 0
-WallCollisionId = -3 #For collision with a wall
+OrbList = WeakList()
 
 def MakeOrb( parent, orbType, pos ):
     orb = Entity()
@@ -62,17 +21,36 @@ def MakeOrb( parent, orbType, pos ):
 def damage( orb, char ):
     char.takeDamage( orb, orbDamage[ orb ] )
 
+def destroy( orb ):
+    orb.world.removeEntity( orb )
+
 def merge( orb1, orb2, newOrb ):
-    print( 'Merging %s and %s to %s' % ( orb1, orb2, orbNames[ newOrb ] ) )
+    _orb1 = orb1.getComponent( SpellComponent )
+    _orb2 = orb2.getComponent( SpellComponent )
+    if _orb1.orbType == _orb2.orbType:
+        Funcs.AddLog( 'Two %s orbs merged into a %s orb.' % ( orbNames[_orb1.orbType], orbNames[newOrb] ) )
+    else:
+        Funcs.AddLog( 'A %s orb and a %s orb have merged into a %s orb.' % ( orbNames[_orb1.orbType], orbNames[_orb2.orbType], orbNames[newOrb] ) )
+
+    if hasattr( orb1, 'isMerged' ) or hasattr( orb2, 'isMerged' ):
+        print( 'Aborting merge.' )
+
     world = orb1.world
     world.removeEntity( orb1 )
     world.removeEntity( orb2 )
 
-    newOrb1 = MakeOrb( None, newOrb, orb1.getComponent( Position ) )
-    newOrb2 = MakeOrb( None, newOrb, orb2.getComponent( Position ) )
+    orb1.isMerged = True
+    orb2.isMerged = True
 
-    newOrb1.getComponent( SpellComponent ).vel = orb1.getComponent( SpellComponent ).vel * 1.3
-    newOrb2.getComponent( SpellComponent ).vel = orb2.getComponent( SpellComponent ).vel * 1.3
+    pos1 = orb1.getComponent( Position )
+    pos2 = orb2.getComponent( Position )
+
+    newOrb1 = MakeOrb( None, newOrb, pos1 )
+    newOrb2 = MakeOrb( None, newOrb, pos2 )
+
+    diff = ( Point( pos1 ) - Point( pos2 ) ).normalized()
+    newOrb1.getComponent( SpellComponent ).vel = diff * 3
+    newOrb2.getComponent( SpellComponent ).vel = diff * -3
 
     world.addEntity( newOrb1 )
     world.addEntity( newOrb2 )
@@ -80,7 +58,7 @@ def merge( orb1, orb2, newOrb ):
 
 CollisionTypes = {
         ( WaterOrb, EnemyCollisionId ): lambda orb, enemy, char: ( char.makeWet(), damage( WaterOrb, char ) ),
-        ( FireOrb, EnemyCollisionId ): lambda orb, enemy, char: ( char.makeDry(), damage( WaterOrb, char ) ),
+        ( FireOrb, EnemyCollisionId ): lambda orb, enemy, char: ( char.makeDry(), damage( FireOrb, char ) ),
         ( EarthOrb, EnemyCollisionId ): lambda orb, enemy, char: ( damage( EarthOrb, char ) ),
         ( AirOrb, EnemyCollisionId ): lambda orb, enemy, char: ( damage( AirOrb, char ) ),
         ( SteamOrb, EnemyCollisionId ): lambda orb, enemy, char: ( damage( SteamOrb, char ) ),
@@ -93,9 +71,15 @@ CollisionTypes = {
         ( FireOrb, AirOrb ): lambda orb1, orb2, extra: ( merge( orb1, orb2, LightningOrb ) ),
         ( FireOrb, LightningOrb ): lambda orb1, orb2, extra: ( merge( orb1, orb2, LightningOrb ) ),
         ( AirOrb, LightningOrb ): lambda orb1, orb2, extra: ( merge( orb1, orb2, LightningOrb ) ),
+
+        ( WaterOrb, LightningOrb ): lambda orb1, orb2, _: ( destroy( orb1 ), destroy( orb2 ) ),
+        ( SteamOrb, LightningOrb ): lambda orb1, orb2, _: ( destroy( orb1 ), destroy( orb2 ) ),
+        ( EarthOrb, LightningOrb ): lambda orb1, orb2, _: ( destroy( orb1 ), destroy( orb2 ) ),
+
+        ( EarthOrb, WallCollisionId ): lambda orb1, _, __: destroy( orb1 ),
+        StopCollisionId: lambda orb1: destroy( orb1 ),
         }
 
-OrbList = WeakList()
 
 class SpellCaster( Component ):
     def __init__( self ):
@@ -157,6 +141,7 @@ class SpellComponent( Component ):
         def p():
             return Point( int( math.floor( self.pos.x ) ), int( math.floor( self.pos.y ) ) )
 
+        pP = None
         lP = p()
 
         isBlocked = False
@@ -171,6 +156,12 @@ class SpellComponent( Component ):
             entList = self.getCollidingEnts( lP ) if not wallBlocked else tuple()
 
             isBlocked = wallBlocked or len( entList ) > 0
+
+        checkBlock()
+        if wallBlocked:
+            self._doCollide( self.orbType, StopCollisionId, self.vel, None )
+            print( 'Spawned in a wall :(' )
+            return
 
         #Aaaaargh this is a bloody stupid implementation but it works, gamejam ho!
         while not isBlocked and traveled <= 1:
@@ -188,10 +179,11 @@ class SpellComponent( Component ):
             self.pos.x -= self.vel.x * 0.25
             self.pos.y -= self.vel.y * 0.25
 
-            if pP.x != lP.x: #Go back on the X axis
-                self.vel.x *= -0.9
-            else:
-                self.vel.y *= -0.9
+            if pP is not None:
+                if pP.x != lP.x: #Go back on the X axis
+                    self.vel.x *= -0.9
+                else:
+                    self.vel.y *= -0.9
         else:
             if self.caster is not None:
                 return
@@ -201,10 +193,13 @@ class SpellComponent( Component ):
                 if Point( otherPos.x - self.pos.x, otherPos.y - self.pos.y ).squaredLength < 2 * 2:
                     self.onCollide( False, ( otherEnt, ) )
 
+            self.vel *= 0.95
+            if self.vel.squaredLength < 0.1 * 0.1:
+                self._doCollide( self.orbType, StopCollisionId, self.vel, None )
 
 
     def getCollidingEnts( self, nP ):
-        ents = self.entity.world.getEntitiesAtPos( nP )
+        ents = self.entity.world.getEntitiesAtPos( nP, 2 )
         ret = []
 
         for ent in ents:
@@ -248,6 +243,8 @@ class SpellComponent( Component ):
             CollisionTypes[ col ]( ent, other, extraParam )
         elif ( b, a ) in CollisionTypes:
             CollisionTypes[ ( b, a ) ]( other, ent, extraParam )
+        elif b < 0 and b in CollisionTypes:
+            CollisionTypes[ b ]( ent )
 
     def updateVel( self ):
         if self.parentPos is None:
@@ -304,14 +301,14 @@ class SpellRenderable( Renderable ):
 
 def SpawnOrbAction( actionName, world, ent, params ):
     world.addEntity( MakeOrb( ent, params, ent.getComponent( Position ) ) )
-    print( 'Creating orb: %s (%d)' % ( orbNames[ params ], params ) )
+    Funcs.AddLog( 'Creating a %s orb.' % ( orbNames[ params ] ) )
     return 5
 def FireOrbsAction( actionName, world, ent, params ):
     caster = ent.getComponent( SpellCaster )
     spell = caster.orbList
 
     if len( spell ) == 0:
-        print( 'No orb to release!' )
+        Funcs.AddLog( 'No orb to release!' )
         return None
 
     p = Point( *params )
