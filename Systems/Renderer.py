@@ -3,6 +3,8 @@ import libtcodpy as tcod
 
 import Graphics.MapRenderer
 
+menuHeight = 10
+
 class Renderer():
     def __init__( self, world, renderWidth, renderHeight ):
         self.world = world
@@ -10,7 +12,7 @@ class Renderer():
         self._map = None
         self.renderTarget = None
 
-        self.rW = renderWidth
+        self.rW = renderWidth - menuHeight
         self.rH = renderHeight
 
         self.hRW = self.rW / 2
