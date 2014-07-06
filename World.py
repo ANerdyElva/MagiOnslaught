@@ -3,8 +3,13 @@ import functools
 
 from Components import *
 
+world = None
+
 class World():
     def __init__( self, _map ):
+        global world
+        world = World
+
         self._isDirty = True
         self.clear()
 

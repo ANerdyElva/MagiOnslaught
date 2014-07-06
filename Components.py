@@ -2,6 +2,7 @@ import random
 import libtcodpy as libtcod
 import Constant
 import Colors
+from Math2D import *
 
 class Component():
     def _setEntity( self, ent ):
@@ -91,16 +92,30 @@ class TurnTaker( Component ):
         if self.ai is not None:
             return self.ai( self, self.entity )
 
+    def finalize( self ):
+        if self.entity.hasComponent( CharacterComponent ):
+            self.randomRange = self.entity.getComponent( CharacterComponent ).TurnRandomRange
+        else:
+            self.randomRange = 0
+
 _directions = ( ( 1, 0 ), ( 0, 1 ), ( -1, 0 ), ( 0, -1 ) )
 class TurnTakerAi():
     def __call__( self, turnComponent, ent ):
-        pos = ent.getComponent( Position )
-        if pos is not None:
-            l = list( _directions )
-            random.shuffle( l )
+        pos = Point( ent.getComponent( Position ) )
+        targetPos = Point( ent.target.getComponent( Position ) )
 
-            for choice in l:
-                if not ent.world._map.isBlocked( pos.x + choice[0], pos.y + choice[1] ):
-                    return Action( ent, 'move', choice )
+        if ( targetPos - pos ).squaredLength < 2:
+            return Action( ent, 'attack', ent.target )
+        elif ( targetPos - pos ).squaredLength < 20 * 20:
+            path = ent.world._map.findPath( pos, targetPos )
 
-        return Action( ent, 'sleep', 100 )
+            if path is not None and len( path ) > 2:
+                nextPoint = path[ -2 ]
+
+                _x = int(math.floor(pos.x))
+                _y = int(math.floor(pos.y)) 
+
+                move = ( nextPoint[0] - _x, nextPoint[1] - _y )
+                return Action( ent, 'move', move )
+
+        return Action( ent, 'sleep', 400 )

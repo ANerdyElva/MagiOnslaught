@@ -28,8 +28,11 @@ actionMap[ 'sleep' ] = Actions.Sleep
 actionMap[ 'spawnorb' ] = SpawnOrbAction
 actionMap[ 'fireorbs' ] = FireOrbsAction
 
-playerCharacter = Character.Character( 'Player', Character.BaseStats, MoveSpeed = 2.0, RenderColor = Colors.Player )
-enemyCharacter = Character.Character( 'Enemy', Character.BaseStats, MoveSpeed = 1.2, RenderColor = Colors.Enemy, BaseHP = 1 )
+playerCharacter = Character.Character( 'Player', Character.BaseStats, MoveSpeed = 1.0, RenderColor = Colors.Player )
+enemyCharacter = [
+        Character.Character( 'Orc', Character.BaseStats, MoveSpeed = 0.8, RenderColor = Colors.Orc, BaseHP = 4, Damge = 3, TurnRandomRange = 10, SleepColor = Colors.OrcSleeping, MoveColor = Colors.OrcMoving ),
+        Character.Character( 'Goblin', Character.BaseStats, MoveSpeed = 1.2, RenderColor = Colors.Goblin, BaseHP = 2, Damage = 1, TurnRandomRange = 10, SleepColor = Colors.GoblinSleeping, MoveColor = Colors.GoblinMoving ),
+        ]
 
 class Game():
     def __init__( self ):
@@ -41,14 +44,14 @@ class Game():
 
         POINT_11 = Math2D.Point( 1, 1 )
 
-        m = self.world._map
-        Funcs.buildMap( m, root )
+        Funcs.buildMap( self.world._map, root )
+        self.world._map.buildTcodMap()
 
         self.renderer = Systems.Renderer( self.world, Init.SCREEN_WIDTH, Init.SCREEN_HEIGHT )
         self.renderer.setMap( self.world._map )
 
-        room = self.root.pickRandomRoom( lambda: random.random() < 0.5 )
-        pos = Math2D.IntPoint( room.rect.center )
+        playerRoom = self.root.pickRandomRoom( lambda: random.random() < 0.5 )
+        pos = Math2D.IntPoint( playerRoom.rect.center )
 
         self.actionSystem = ActionSystem( self.world, actionMap )
 
@@ -67,31 +70,36 @@ class Game():
         self.world.addEntity( player )
         self.player = player
 
-        for i in range( 1 ):
-            self.world.addEntity( MakeOrb( player, i % 2, pos ) )
-
         def addEnemy( room ):
             if room.isLeaf == False:
                 return
+            if room == playerRoom:
+                return
 
-            rect = room.rect
-            while True:
-                pos = rect.p1 + ( rect.dim * Math2D.Point( random.uniform( 0.2, 0.8 ), random.uniform( 0.2, 0.8 ) ) )
-                pos = Math2D.IntPoint( pos )
+            prob = 1.4
 
-                if not self.world._map.isBlocked( pos.x, pos.y ):
-                    break
+            while random.random() < prob:
+                rect = room.rect
+                while True:
+                    pos = rect.p1 + ( rect.dim * Math2D.Point( random.uniform( 0.2, 0.8 ), random.uniform( 0.2, 0.8 ) ) )
+                    pos = Math2D.IntPoint( pos )
 
-            enemy = Entity()
-            enemy.addComponent( Position( pos.x, pos.y ) )
-            enemy.addComponent( TurnTaker( ai = TurnTakerAi() ) )
-            enemy.addComponent( Renderable( chr(1) ) )
-            enemy.addComponent( CharacterComponent( enemyCharacter ) )
-            self.world.addEntity( enemy )
+                    if not self.world._map.isBlocked( pos.x, pos.y ):
+                        break
 
-        for i in range( 5 ):
-            addEnemy( room )
-        #self.root.iterateTree( addEnemy, None )
+                enemy = Entity()
+                enemy.target = player
+                enemy.addComponent( Position( pos.x, pos.y ) )
+                enemy.addComponent( TurnTaker( ai = TurnTakerAi() ) )
+                enemy.addComponent( Renderable( chr(1) ) )
+                enemy.addComponent( CharacterComponent( random.choice( enemyCharacter ) ) )
+                self.world.addEntity( enemy )
+
+                prob *= 0.7
+
+        #for i in range( 5 ):
+        #    addEnemy( room )
+        self.root.iterateTree( addEnemy, None )
         self.curTurn = 0
 
     def handleInput( self, key ):
@@ -147,8 +155,6 @@ class Game():
         self.waitingOnTurn = True
         self.render()
 
-        startTime = time.time()
-
         #Take turns
         while True:
             success = self.actionSystem.process( SpellTurnTime )
@@ -156,7 +162,7 @@ class Game():
             while self.curTurn + SpellTurnTime < self.actionSystem.curTurn:
                 self.updateTurn()
                 self.render()
-                time.sleep( 0.10 )
+
 
             if not success:
                 break
@@ -173,7 +179,15 @@ class Game():
 
     def updateTurn( self ):
         World.curTurn = self.curTurn
-        for ent in self.world.getEntityByComponent( SpellComponent ):
+
+        startTime = time.time()
+        entList = self.world.getEntityByComponent( SpellComponent )
+        for ent in entList:
             ent.getComponent( SpellComponent ).update()
+
+        endTime = time.time()
+        sleepTime = 0.01
+        if len( entList ) > 0 and ( endTime - startTime ) < sleepTime:
+            time.sleep( sleepTime - ( endTime - startTime ) )
 
         self.curTurn += SpellTurnTime

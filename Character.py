@@ -16,6 +16,8 @@ class Character():
         return '[Character %s]' % ( [ str( self.data[n] ) for n in self.data ] )
 
     def __getattr__( self, key ):
+        if key not in self.data:
+            return None
         return self.data[ key ]
 
 
@@ -26,4 +28,5 @@ BaseStats = Character('Base', None,
     AttackSpeed = 1.0,
 
     AttackDamage = 1,
+    TurnRandomRange = 0,
     )

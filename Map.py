@@ -1,3 +1,5 @@
+import libtcodpy as tcod
+import math
 import Constant
 
 class Map():
@@ -7,6 +9,8 @@ class Map():
 
         self.tileType = self.newByteArray()
         self.tileData = self.newByteArray()
+
+        self.pathEnd = (-1,-1)
 
     def I( self, x, y ):
         assert( x < self.width )
@@ -70,3 +74,43 @@ class Map():
 
     def isBlocked( self, x, y ):
         return self.hasFlag( x, y, Constant.BLOCKED )
+
+    def buildTcodMap( self ):
+        self.tcodmap = tcod.map_new( self.width, self.height )
+        tcod.map_clear( self.tcodmap, True, True )
+
+        return
+        for y in range( self.height ):
+            i = self.I( 0, y )
+            for x in range( self.width ):
+                flags = self.tileData[ i ]
+                tcod.map_set_properties( self.tcodmap,
+                        x, y,
+                        ( flags & Constant.TRANSPARENT ) == 0,
+                        ( flags & Constant.BLOCKED ) == 0 )
+
+
+                i += 1
+
+    def findPath( self, start, end ):
+        def point( p ):
+            return ( int( math.floor( p.x ) ), int( math.floor( p.y ) ) )
+
+        start = point( start )
+        end = point( end )
+
+        if self.pathEnd != end:
+            self.pathEnd = end
+
+            self.dijkstra = tcod.dijkstra_new( self.tcodmap )
+            tcod.dijkstra_compute( self.dijkstra, end[0], end[1] )
+
+        if not tcod.dijkstra_path_set( self.dijkstra, start[0], start[1] ):
+            return None
+
+        ret = []
+        while not tcod.dijkstra_is_empty( self.dijkstra ):
+            x, y = tcod.dijkstra_path_walk( self.dijkstra )
+            ret.append( ( x, y ) )
+
+        return ret
