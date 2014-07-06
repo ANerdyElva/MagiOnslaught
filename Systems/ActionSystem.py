@@ -81,7 +81,11 @@ class ActionSystem():
             return False
 
         restTime = self.actions[ action.name ]( action.name, self.world, action.entity, action.params )
-        assert( restTime is not None and restTime > 0 )
+        if restTime is None:
+            self._insertEnt( firstEnt )
+            return False
+
+        assert( restTime > 0 )
 
         firstEnt.__nextTurn = self.curTurn + restTime
         self._insertEnt( firstEnt )
